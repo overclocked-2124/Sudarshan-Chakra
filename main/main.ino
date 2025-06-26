@@ -104,4 +104,4 @@ void soundSiren(bool play) {
   } else {
     noTone(SPEAKER_PIN);
   }
-}
+} 
