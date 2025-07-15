@@ -2,6 +2,7 @@ import processing.serial.*;
 // Regular expression library is needed for smart parsing
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.io.PrintWriter; //  NEW: Required for saving to file
 
 Serial myPort; // The serial port object
 
@@ -14,6 +15,9 @@ int iDistance = 0;
 
 // Maximum distance the radar should display (can be same as Arduino's threshold)
 final int maxDistance = 50; // In cm
+
+PrintWriter output; //  NEW: File writer object
+
 
 void setup() {
   size(1200, 700); // Screen resolution
@@ -33,6 +37,9 @@ void setup() {
 
   // Initialize the list that will store detected objects
   detectedPoints = new ArrayList<PVector>();
+
+  //  NEW: Create (or overwrite) the radar data file
+  output = createWriter("radar_data.txt"); 
 }
 
 void draw() {
@@ -73,6 +80,10 @@ void serialEvent(Serial myPort) {
       if (iDistance < maxDistance && iDistance > 0) {
         // Add a new PVector(angle, distance) to our list
         detectedPoints.add(new PVector(iAngle, iDistance));
+
+        //  NEW: Write to radar_data.txt
+        output.println(iAngle + "," + iDistance);
+        output.flush();
       }
     }
     // If the line was ">>> Target Detected! <<<" or something else, 'm' will be null,
