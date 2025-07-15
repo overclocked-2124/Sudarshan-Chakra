@@ -2,7 +2,7 @@ import time
 from pymongo import MongoClient
 
 # 🔗 Step 1: Connect to local MongoDB
-client = MongoClient("mongodb://localhost:27017/")
+client = MongoClient("mongodb+srv://Kuber_Shubhang:S_400_missile_System@radarcluster.rjkxqoa.mongodb.net/?retryWrites=true&w=majority&appName=RadarCluster")
 db = client["radarDB"]              # Database name
 collection = db["scans"]            # Collection name
 
