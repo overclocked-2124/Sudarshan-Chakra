@@ -81,7 +81,7 @@ bool confirmTarget(int angle) {
   // Require at least 2 out of 3 readings to be valid
   if (validReadings >= 2) {
     long avgDistance = totalDistance / validReadings;
-    Serial.print("Target confirmed at angle: ");
+    Serial.print("Angle: ");
     Serial.print(angle);
     Serial.print(", Distance: ");
     Serial.println(avgDistance);
