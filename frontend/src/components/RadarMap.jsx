@@ -79,8 +79,8 @@ const Terrain = () => {
 
 // Target Marker
 const TargetMarker = ({ angle, distance, isActive }) => {
-  // Convert angle to radians and calculate position
-  const angleRad = (angle * Math.PI) / 180
+  // Convert angle to radians and calculate position (flipped orientation)
+  const angleRad = ((180 - angle) * Math.PI) / 180 // Flip the angle
   const x = Math.cos(angleRad) * (distance / 2) // Scale down distance for visualization
   const z = Math.sin(angleRad) * (distance / 2)
   
@@ -141,10 +141,10 @@ const RadarMap = () => {
     }
   }
   
-  // Fetch radar data every 15 seconds
+  // Fetch radar data every 10 seconds
   useEffect(() => {
     fetchRadarData()
-    const interval = setInterval(fetchRadarData, 15000)
+    const interval = setInterval(fetchRadarData, 10000)
     return () => clearInterval(interval)
   }, [])
   
@@ -204,10 +204,10 @@ const RadarMap = () => {
             <meshStandardMaterial color="#00ff41" emissive="#00ff41" emissiveIntensity={0.3} />
           </mesh>
           
-          {/* Angle markers */}
-          <Text position={[100, 5, 0]} fontSize={6} color="#00ff41">0°</Text>
+          {/* Angle markers (flipped orientation) */}
+          <Text position={[-100, 5, 0]} fontSize={6} color="#00ff41">0°</Text>
           <Text position={[0, 5, 100]} fontSize={6} color="#00ff41">90°</Text>
-          <Text position={[-100, 5, 0]} fontSize={6} color="#00ff41">180°</Text>
+          <Text position={[100, 5, 0]} fontSize={6} color="#00ff41">180°</Text>
           
           <OrbitControls enableZoom={true} enablePan={true} />
         </Canvas>
@@ -231,7 +231,7 @@ const RadarMap = () => {
             </div>
             <div className="control-item">
               <span className="control-label">UPDATE RATE:</span>
-              <span className="control-value">15 SEC</span>
+              <span className="control-value">10 SEC</span>
             </div>
             <div className="control-item">
               <span className="control-label">PRECISION:</span>

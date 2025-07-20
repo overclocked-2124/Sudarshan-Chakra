@@ -79,10 +79,43 @@ const Terrain = () => {
   )
 }
 
+// Statistical Marker Component for 3D radar
+const StatisticalMarker = ({ distance, label, color, opacity = 0.6 }) => {
+  if (distance === Infinity || distance === 0) return null
+  
+  // Create a circular line at the specified distance
+  const points = []
+  const radius = distance / 2 // Scale down for visualization
+  
+  for (let i = 0; i <= 64; i++) {
+    const angle = (i / 64) * Math.PI // 0 to π radians (0 to 180 degrees)
+    points.push(new Vector3(
+      Math.cos(angle) * radius,
+      1,
+      Math.sin(angle) * radius
+    ))
+  }
+  
+  return (
+    <group>
+      <Line points={points} color={color} lineWidth={2} opacity={opacity} />
+      <Text
+        position={[0, 3, radius]}
+        fontSize={3}
+        color={color}
+        anchorX="center"
+        anchorY="middle"
+      >
+        {`${label}: ${distance.toFixed(1)}cm`}
+      </Text>
+    </group>
+  )
+}
+
 // Target Marker
 const TargetMarker = ({ angle, distance, isActive, opacity = 1.0, color = '#00ff41' }) => {
-  // Convert angle to radians and calculate position
-  const angleRad = (angle * Math.PI) / 180
+  // Convert angle to radians and calculate position (flipped orientation)
+  const angleRad = ((180 - angle) * Math.PI) / 180 // Flip the angle
   const x = Math.cos(angleRad) * (distance / 2) // Scale down distance for visualization
   const z = Math.sin(angleRad) * (distance / 2)
   
@@ -132,9 +165,81 @@ const Dashboard = () => {
     timestamp: Date.now() / 1000
   })
   const [recentData, setRecentData] = useState([])
+  const [allData, setAllData] = useState([])
   const [isConnected, setIsConnected] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [sessionStartTime] = useState(Date.now())
+  const [lastRadarValue, setLastRadarValue] = useState(null) // Track last value to detect changes
+  const [pingStats, setPingStats] = useState({
+    sessionPings: 0,
+    dailyPings: 0,
+    previousRanges: [], // Only show last 5 changed values
+    averageRange: 0,
+    minRange: Infinity,
+    maxRange: 0,
+    allTimeAverage: 0,
+    allTimeMin: Infinity,
+    allTimeMax: 0
+  })
+
+  // Update ping statistics with MongoDB data - only count new values
+  const updatePingStats = (newDistance, allMongoData = []) => {
+    // Check if this is a new value (different from last recorded value)
+    const isNewValue = lastRadarValue === null || 
+                      Math.abs(newDistance - lastRadarValue.distance) > 0.1 || // Allow small tolerance
+                      Math.abs(Date.now() / 1000 - lastRadarValue.timestamp) > 30 // Or if more than 30 seconds passed
+    
+    if (!isNewValue) {
+      return // Don't count recurring values
+    }
+    
+    // Update last radar value
+    setLastRadarValue({ distance: newDistance, timestamp: Date.now() / 1000 })
+    
+    setPingStats(prev => {
+      const newPreviousRanges = [...prev.previousRanges, newDistance].slice(-5) // Keep only last 5 changed values
+      const averageRange = newPreviousRanges.reduce((sum, range) => sum + range, 0) / newPreviousRanges.length
+      
+      // Calculate all-time statistics from MongoDB
+      let allTimeAverage = 0
+      let allTimeMin = Infinity
+      let allTimeMax = 0
+      
+      if (allMongoData.length > 0) {
+        const allDistances = allMongoData.map(d => d.distance)
+        allTimeAverage = allDistances.reduce((sum, d) => sum + d, 0) / allDistances.length
+        allTimeMin = Math.min(...allDistances)
+        allTimeMax = Math.max(...allDistances)
+      }
+      
+      return {
+        sessionPings: prev.sessionPings + 1, // Only increment for new values
+        dailyPings: prev.dailyPings + 1,
+        previousRanges: newPreviousRanges, // Only last 5 changed values
+        averageRange: averageRange,
+        minRange: Math.min(prev.minRange, newDistance),
+        maxRange: Math.max(prev.maxRange, newDistance),
+        allTimeAverage,
+        allTimeMin,
+        allTimeMax
+      }
+    })
+  }
+
+  // Fetch all data for statistics
+  const fetchAllData = async () => {
+    try {
+      const response = await radarAPI.getAll(1, 500) // Get more data for statistics
+      if (response.data) {
+        setAllData(response.data)
+        return response.data
+      }
+    } catch (err) {
+      console.error('Failed to fetch all radar data:', err)
+    }
+    return []
+  }
 
   // Fetch latest data from MongoDB
   const fetchRadarData = async () => {
@@ -147,17 +252,23 @@ const Dashboard = () => {
       })
       setIsConnected(true)
       setError(null)
+      
+      // Fetch all data and update statistics
+      const allMongoData = await fetchAllData()
+      updatePingStats(data.distance, allMongoData)
     } catch (err) {
       console.error('Failed to fetch radar data:', err)
       setError('Failed to connect to radar system')
       setIsConnected(false)
       
       // Use fallback simulated data if API fails
+      const simulatedDistance = Math.random() * 100 + 10
       setRadarData(prev => ({
         angle: Math.random() * 180, // 0-180 degree range
-        distance: Math.random() * 100 + 10, // 10-110 cm
+        distance: simulatedDistance, // 10-110 cm
         timestamp: Date.now() / 1000
       }))
+      updatePingStats(simulatedDistance, [])
     } finally {
       setIsLoading(false)
     }
@@ -273,23 +384,54 @@ const Dashboard = () => {
           <div className="card-body">
             <div className="main-value">{radarData.angle.toFixed(1)}°</div>
             <div className="card-subtitle">Azimuth Angle (0-180°)</div>
-            <div className="angle-indicator">
-              <div className="angle-scale-container">
-                <div 
-                  className="angle-pointer" 
-                  style={{ 
-                    transform: `rotate(${radarData.angle}deg)`,
-                    transformOrigin: 'center bottom'
-                  }}
-                ></div>
-                <div className="angle-scale">
-                  <span className="scale-mark" style={{ left: '0%' }}>0°</span>
-                  <span className="scale-mark" style={{ left: '25%' }}>45°</span>
-                  <span className="scale-mark" style={{ left: '50%' }}>90°</span>
-                  <span className="scale-mark" style={{ left: '75%' }}>135°</span>
-                  <span className="scale-mark" style={{ left: '100%' }}>180°</span>
+            <div className="bearing-radar-container">
+              <div className="bearing-radar">
+                <div className="radar-background">
+                  <div className="radar-grid">
+                    {/* Create angle markers */}
+                    {[0, 30, 60, 90, 120, 150, 180].map(angle => (
+                      <div 
+                        key={angle}
+                        className="angle-marker" 
+                        style={{ 
+                          transform: `rotate(${angle}deg)`,
+                          left: '50%',
+                          top: '50%',
+                          transformOrigin: '0 0'
+                        }}
+                      >
+                        <span className="angle-label" style={{ transform: `rotate(${-angle}deg)` }}>
+                          {angle}°
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="radar-sweep-line" 
+                       style={{ transform: `rotate(${180 - radarData.angle}deg)` }}>
+                  </div>
+                  <div className="target-dot" 
+                       style={{ 
+                         transform: `rotate(${180 - radarData.angle}deg) translateX(60px)`,
+                         transformOrigin: '0 0'
+                       }}>
+                  </div>
+                  <div className="radar-center"></div>
                 </div>
-                <div className="angle-arc"></div>
+              </div>
+              <div className="bearing-display">
+                <div className="bearing-segments">
+                  {[0, 30, 60, 90, 120, 150, 180].map(segmentAngle => (
+                    <div 
+                      key={segmentAngle}
+                      className={`bearing-segment ${Math.abs(radarData.angle - segmentAngle) < 15 ? 'active' : ''}`}
+                      style={{ 
+                        background: Math.abs(radarData.angle - segmentAngle) < 15 ? '#00ff41' : 'rgba(0, 255, 65, 0.2)'
+                      }}
+                    >
+                      {segmentAngle}°
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -321,6 +463,42 @@ const Dashboard = () => {
                 <span className="scale-value">100 cm</span>
               </div>
             </div>
+            
+            {/* Previous pings statistics */}
+            <div className="ping-statistics">
+              <div className="stat-row">
+                <span className="stat-label">AVG:</span>
+                <span className="stat-value">{pingStats.allTimeAverage > 0 ? pingStats.allTimeAverage.toFixed(1) : '0.0'} cm</span>
+              </div>
+              <div className="stat-row">
+                <span className="stat-label">MIN:</span>
+                <span className="stat-value">{pingStats.allTimeMin === Infinity ? '0.0' : pingStats.allTimeMin.toFixed(1)} cm</span>
+              </div>
+              <div className="stat-row">
+                <span className="stat-label">MAX:</span>
+                <span className="stat-value">{pingStats.allTimeMax > 0 ? pingStats.allTimeMax.toFixed(1) : '0.0'} cm</span>
+              </div>
+            </div>
+            
+            {/* Previous ranges chart */}
+            {pingStats.previousRanges.length > 0 && (
+              <div className="previous-ranges">
+                <div className="ranges-label">Last 5 Changed Values:</div>
+                <div className="ranges-chart">
+                  {pingStats.previousRanges.map((range, index) => (
+                    <div
+                      key={index}
+                      className="range-bar"
+                      style={{
+                        height: `${(range / 100) * 40}px`,
+                        backgroundColor: index === pingStats.previousRanges.length - 1 ? '#00ff41' : 'rgba(0, 255, 65, 0.5)'
+                      }}
+                      title={`${range.toFixed(1)} cm`}
+                    ></div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <div className="card-footer">
             <Activity className="footer-icon" />
@@ -338,6 +516,25 @@ const Dashboard = () => {
               {formatTimestamp(radarData.timestamp)}
             </div>
             <div className="card-subtitle">System Time (Updates every 10s)</div>
+            
+            {/* Ping count statistics */}
+            <div className="ping-counts">
+              <div className="count-row">
+                <span className="count-label">Session Pings:</span>
+                <span className="count-value">{pingStats.sessionPings}</span>
+              </div>
+              <div className="count-row">
+                <span className="count-label">Daily Pings:</span>
+                <span className="count-value">{pingStats.dailyPings}</span>
+              </div>
+              <div className="count-row">
+                <span className="count-label">Session Time:</span>
+                <span className="count-value">
+                  {Math.floor((Date.now() - sessionStartTime) / 60000)}m {Math.floor(((Date.now() - sessionStartTime) % 60000) / 1000)}s
+                </span>
+              </div>
+            </div>
+            
             <div className="pulse-indicator">
               <div className={`pulse-dot ${isConnected ? 'connected' : 'disconnected'}`}></div>
             </div>
@@ -391,10 +588,10 @@ const Dashboard = () => {
               <meshStandardMaterial color="#00ff41" emissive="#00ff41" emissiveIntensity={0.3} />
             </mesh>
             
-            {/* Angle markers */}
-            <Text position={[100, 5, 0]} fontSize={6} color="#00ff41">0°</Text>
+            {/* Angle markers (flipped orientation) */}
+            <Text position={[-100, 5, 0]} fontSize={6} color="#00ff41">0°</Text>
             <Text position={[0, 5, 100]} fontSize={6} color="#00ff41">90°</Text>
-            <Text position={[-100, 5, 0]} fontSize={6} color="#00ff41">180°</Text>
+            <Text position={[100, 5, 0]} fontSize={6} color="#00ff41">180°</Text>
             
             <OrbitControls enableZoom={true} enablePan={true} />
           </Canvas>

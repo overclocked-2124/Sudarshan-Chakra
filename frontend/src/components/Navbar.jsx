@@ -1,9 +1,15 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Radar, Shield, Target, Lock } from 'lucide-react'
+import { Radar, Shield, Target, Lock, Menu, X } from 'lucide-react'
+import { useState } from 'react'
 import './Navbar.css'
 
 const Navbar = () => {
   const location = useLocation()
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen)
+  }
 
   return (
     <nav className="navbar">
@@ -14,10 +20,15 @@ const Navbar = () => {
           <span className="classification">CLASSIFIED</span>
         </div>
         
-        <div className="navbar-links">
+        <button className="mobile-menu-toggle" onClick={toggleMenu}>
+          {isMenuOpen ? <X className="menu-icon" /> : <Menu className="menu-icon" />}
+        </button>
+
+        <div className={`navbar-links ${isMenuOpen ? 'mobile-open' : ''}`}>
           <Link 
             to="/" 
             className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
+            onClick={() => setIsMenuOpen(false)}
           >
             <Target className="nav-icon" />
             DASHBOARD
@@ -25,6 +36,7 @@ const Navbar = () => {
           <Link 
             to="/classified" 
             className={`nav-link ${location.pathname === '/classified' ? 'active' : ''}`}
+            onClick={() => setIsMenuOpen(false)}
           >
             <Lock className="nav-icon" />
             CLASSIFIED
