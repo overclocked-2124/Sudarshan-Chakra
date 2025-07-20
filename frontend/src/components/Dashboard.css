@@ -306,6 +306,40 @@
   filter: brightness(1.2);
 }
 
+/* Previous Bearings Styles */
+.previous-bearings {
+  margin-top: 1rem;
+}
+
+.bearings-label {
+  font-size: 0.7rem;
+  color: #a0a0a0;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.bearings-chart {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  height: 40px;
+  gap: 2px;
+  padding: 0 5px;
+}
+
+.bearing-bar {
+  flex: 1;
+  min-height: 3px;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.bearing-bar:hover {
+  transform: scaleY(1.1);
+  filter: brightness(1.2);
+}
+
 /* Ping Count Styles */
 .ping-counts {
   margin: 1rem 0;

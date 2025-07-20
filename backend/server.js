@@ -13,18 +13,18 @@ app.use(express.json());
 // MongoDB connection
 const MONGODB_URI = "mongodb+srv://snehalreddy:S0OcbrCRXJmAZrAd@sudarshan-chakra-cluste.0hokvj0.mongodb.net/radarDB";
 
-console.log('🚀 Starting Sudarshan Chakra Radar Server...');
-console.log('📡 Connecting to MongoDB Atlas...');
+console.log('Starting Sudarshan Chakra Radar Server...');
+console.log('Connecting to MongoDB Atlas...');
 
 mongoose.connect(MONGODB_URI)
 .then(() => {
-  console.log('✅ Connected to MongoDB Atlas successfully');
-  console.log('🎯 Database: radarDB');
-  console.log('📊 Collection: scans');
+  console.log('Connected to MongoDB Atlas successfully');
+  console.log('Database: radarDB');
+  console.log('Collection: scans');
 })
 .catch(err => {
-  console.error('❌ MongoDB connection error:', err);
-  console.log('⚠️  Retrying connection in 5 seconds...');
+  console.error('MongoDB connection error:', err);
+  console.log('Retrying connection in 5 seconds...');
 });
 
 // Radar Data Schema
@@ -59,14 +59,14 @@ app.get('/api/radar/latest', async (req, res) => {
     const latestData = await RadarData.findOne().sort({ timestamp: -1 });
     
     if (!latestData) {
-      console.log('⚠️  [API] No radar data found in database');
+      console.log('[API] No radar data found in database');
       return res.status(404).json({ message: 'No radar data found' });
     }
     
-    console.log(`📊 [API] Latest data: Angle=${latestData.angle}°, Distance=${latestData.distance}cm, Time=${new Date(latestData.timestamp * 1000).toISOString()}`);
+    console.log(`[API] Latest data: Angle=${latestData.angle}°, Distance=${latestData.distance}cm, Time=${new Date(latestData.timestamp * 1000).toISOString()}`);
     res.json(latestData);
   } catch (error) {
-    console.error('❌ [API] Error fetching latest radar data:', error);
+    console.error('[API] Error fetching latest radar data:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -108,11 +108,11 @@ app.get('/api/radar/recent', async (req, res) => {
       .limit(5);
     
     if (!recentData || recentData.length === 0) {
-      console.log('⚠️  [API] No recent radar data found in database');
+      console.log('[API] No recent radar data found in database');
       return res.status(404).json({ message: 'No radar data found' });
     }
     
-    console.log(`📊 [API] Found ${recentData.length} recent data points`);
+    console.log(`[API] Found ${recentData.length} recent data points`);
     recentData.forEach((data, index) => {
       console.log(`   ${index + 1}. Angle=${data.angle}°, Distance=${data.distance}cm, Time=${new Date(data.timestamp * 1000).toISOString()}`);
     });
@@ -120,7 +120,7 @@ app.get('/api/radar/recent', async (req, res) => {
     // Return in chronological order (oldest first) for visualization
     res.json(recentData.reverse());
   } catch (error) {
-    console.error('❌ [API] Error fetching recent radar data:', error);
+    console.error('[API] Error fetching recent radar data:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

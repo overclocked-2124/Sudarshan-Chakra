@@ -175,6 +175,7 @@ const Dashboard = () => {
     sessionPings: 0,
     dailyPings: 0,
     previousRanges: [], // Only show last 5 changed values
+    previousBearings: [], // Only show last 5 changed bearing values
     averageRange: 0,
     minRange: Infinity,
     maxRange: 0,
@@ -184,10 +185,11 @@ const Dashboard = () => {
   })
 
   // Update ping statistics with MongoDB data - only count new values
-  const updatePingStats = (newDistance, allMongoData = []) => {
+  const updatePingStats = (newDistance, newAngle, allMongoData = []) => {
     // Check if this is a new value (different from last recorded value)
     const isNewValue = lastRadarValue === null || 
-                      Math.abs(newDistance - lastRadarValue.distance) > 0.1 || // Allow small tolerance
+                      Math.abs(newDistance - lastRadarValue.distance) > 0.1 || // Allow small tolerance for distance
+                      Math.abs(newAngle - lastRadarValue.angle) > 1.0 || // Allow small tolerance for angle
                       Math.abs(Date.now() / 1000 - lastRadarValue.timestamp) > 30 // Or if more than 30 seconds passed
     
     if (!isNewValue) {
@@ -195,10 +197,11 @@ const Dashboard = () => {
     }
     
     // Update last radar value
-    setLastRadarValue({ distance: newDistance, timestamp: Date.now() / 1000 })
+    setLastRadarValue({ distance: newDistance, angle: newAngle, timestamp: Date.now() / 1000 })
     
     setPingStats(prev => {
       const newPreviousRanges = [...prev.previousRanges, newDistance].slice(-5) // Keep only last 5 changed values
+      const newPreviousBearings = [...prev.previousBearings, newAngle].slice(-5) // Keep only last 5 changed bearing values
       const averageRange = newPreviousRanges.reduce((sum, range) => sum + range, 0) / newPreviousRanges.length
       
       // Calculate all-time statistics from MongoDB
@@ -217,6 +220,7 @@ const Dashboard = () => {
         sessionPings: prev.sessionPings + 1, // Only increment for new values
         dailyPings: prev.dailyPings + 1,
         previousRanges: newPreviousRanges, // Only last 5 changed values
+        previousBearings: newPreviousBearings, // Only last 5 changed bearing values
         averageRange: averageRange,
         minRange: Math.min(prev.minRange, newDistance),
         maxRange: Math.max(prev.maxRange, newDistance),
@@ -255,7 +259,7 @@ const Dashboard = () => {
       
       // Fetch all data and update statistics
       const allMongoData = await fetchAllData()
-      updatePingStats(data.distance, allMongoData)
+      updatePingStats(data.distance, data.angle, allMongoData)
     } catch (err) {
       console.error('Failed to fetch radar data:', err)
       setError('Failed to connect to radar system')
@@ -263,12 +267,13 @@ const Dashboard = () => {
       
       // Use fallback simulated data if API fails
       const simulatedDistance = Math.random() * 100 + 10
+      const simulatedAngle = Math.random() * 180
       setRadarData(prev => ({
-        angle: Math.random() * 180, // 0-180 degree range
+        angle: simulatedAngle, // 0-180 degree range
         distance: simulatedDistance, // 10-110 cm
         timestamp: Date.now() / 1000
       }))
-      updatePingStats(simulatedDistance, [])
+      updatePingStats(simulatedDistance, simulatedAngle, [])
     } finally {
       setIsLoading(false)
     }
@@ -434,6 +439,26 @@ const Dashboard = () => {
                 </div>
               </div>
             </div>
+            
+            {/* Previous bearings chart */}
+            {pingStats.previousBearings.length > 0 && (
+              <div className="previous-bearings">
+                <div className="bearings-label">Last 5 Changed Bearings:</div>
+                <div className="bearings-chart">
+                  {pingStats.previousBearings.map((bearing, index) => (
+                    <div
+                      key={index}
+                      className="bearing-bar"
+                      style={{
+                        height: `${(bearing / 180) * 40}px`,
+                        backgroundColor: index === pingStats.previousBearings.length - 1 ? '#00ff41' : 'rgba(0, 255, 65, 0.5)'
+                      }}
+                      title={`${bearing.toFixed(1)}°`}
+                    ></div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <div className="card-footer">
             <Activity className="footer-icon" />
