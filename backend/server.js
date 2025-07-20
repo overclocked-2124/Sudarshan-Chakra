@@ -8,10 +8,10 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
-app.use(express.json()) 
+app.use(express.json());
 
 // MongoDB connection
-const MONGODB_URI = "mongodb+srv://snehalreddy:S0OcbrCRXJmAZrAd@sudarshan-chakra-cluste.0hokvj0.mongodb.net/radarDB";
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://snehalreddy:S0OcbrCRXJmAZrAd@sudarshan-chakra-cluste.0hokvj0.mongodb.net/radarDB";
 
 console.log('Starting Sudarshan Chakra Radar Server...');
 console.log('Connecting to MongoDB Atlas...');
@@ -52,10 +52,25 @@ const radarDataSchema = new mongoose.Schema({
 const RadarData = mongoose.model('RadarData', radarDataSchema, 'scans');
 
 // Routes
+// Root route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Sudarshan Chakra Radar API',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: [
+      'GET /api/health',
+      'GET /api/radar/latest',
+      'GET /api/radar/recent',
+      'GET /api/radar/all'
+    ]
+  });
+});
+
 // Get latest radar data
 app.get('/api/radar/latest', async (req, res) => {
   try {
-    console.log('🎯 [API] Fetching latest radar data...');
+    console.log('[API] Fetching latest radar data...');
     const latestData = await RadarData.findOne().sort({ timestamp: -1 });
     
     if (!latestData) {
@@ -145,10 +160,28 @@ app.listen(PORT, () => {
   console.log('SUDARSHAN CHAKRA RADAR SERVER');
   console.log('===================================');
   console.log(`Server running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Health check: http://localhost:${PORT}/api/health`);
   console.log(`Latest radar data: http://localhost:${PORT}/api/radar/latest`);
   console.log(`Recent radar data: http://localhost:${PORT}/api/radar/recent`);
   console.log('===================================');
   console.log('Server ready for connections...');
   console.log('');
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received. Shutting down gracefully...');
+  mongoose.connection.close(() => {
+    console.log('MongoDB connection closed.');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received. Shutting down gracefully...');
+  mongoose.connection.close(() => {
+    console.log('MongoDB connection closed.');
+    process.exit(0);
+  });
 });
