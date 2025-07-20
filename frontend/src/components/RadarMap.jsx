@@ -2,18 +2,19 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Text, Line } from '@react-three/drei'
 import { useRef, useState, useEffect } from 'react'
 import { Vector3 } from 'three'
+import { radarAPI } from '../services/api'
 import './RadarMap.css'
 
-// Radar Grid Component
+// Radar Grid Component (Half circle for 0-180 degrees)
 const RadarGrid = () => {
   const lines = []
   
-  // Create concentric circles
+  // Create concentric semicircles (0-180 degrees)
   for (let i = 1; i <= 5; i++) {
     const radius = i * 20
     const points = []
-    for (let j = 0; j <= 64; j++) {
-      const angle = (j / 64) * Math.PI * 2
+    for (let j = 0; j <= 32; j++) { // Half the points for semicircle
+      const angle = (j / 32) * Math.PI // 0 to π radians (0 to 180 degrees)
       points.push(new Vector3(
         Math.cos(angle) * radius,
         0,
@@ -25,9 +26,9 @@ const RadarGrid = () => {
     )
   }
   
-  // Create radial lines
-  for (let i = 0; i < 12; i++) {
-    const angle = (i / 12) * Math.PI * 2
+  // Create radial lines (every 30 degrees from 0 to 180)
+  for (let i = 0; i <= 6; i++) {
+    const angle = (i / 6) * Math.PI // 0 to π radians
     const points = [
       new Vector3(0, 0, 0),
       new Vector3(Math.cos(angle) * 100, 0, Math.sin(angle) * 100)
@@ -78,8 +79,10 @@ const Terrain = () => {
 
 // Target Marker
 const TargetMarker = ({ angle, distance, isActive }) => {
-  const x = Math.cos((angle * Math.PI) / 180) * distance
-  const z = Math.sin((angle * Math.PI) / 180) * distance
+  // Convert angle to radians and calculate position
+  const angleRad = (angle * Math.PI) / 180
+  const x = Math.cos(angleRad) * (distance / 2) // Scale down distance for visualization
+  const z = Math.sin(angleRad) * (distance / 2)
   
   return (
     <group position={[x, 2, z]}>
@@ -98,20 +101,21 @@ const TargetMarker = ({ angle, distance, isActive }) => {
         anchorX="center"
         anchorY="middle"
       >
-        {`${distance}m`}
+        {`${distance.toFixed(1)}cm`}
       </Text>
     </group>
   )
 }
 
-// Radar Sweep
+// Radar Sweep (Half circle sweep)
 const RadarSweep = ({ currentAngle }) => {
+  const angleRad = (currentAngle * Math.PI) / 180
   const points = [
     new Vector3(0, 0.1, 0),
     new Vector3(
-      Math.cos((currentAngle * Math.PI) / 180) * 100,
+      Math.cos(angleRad) * 100,
       0.1,
-      Math.sin((currentAngle * Math.PI) / 180) * 100
+      Math.sin(angleRad) * 100
     )
   ]
   
@@ -127,31 +131,55 @@ const RadarSweep = ({ currentAngle }) => {
 
 const RadarMap = () => {
   const [radarData, setRadarData] = useState({
-    angle: 30.9,
-    distance: 80.1,
+    angle: 0,
+    distance: 0,
     timestamp: Date.now() / 1000
   })
   const [sweepAngle, setSweepAngle] = useState(0)
+  const [isConnected, setIsConnected] = useState(false)
+  const [error, setError] = useState(null)
   
-  // Simulate radar sweep
+  // Fetch data from MongoDB
+  const fetchRadarData = async () => {
+    try {
+      const data = await radarAPI.getLatest()
+      setRadarData({
+        angle: data.angle,
+        distance: data.distance,
+        timestamp: data.timestamp
+      })
+      setIsConnected(true)
+      setError(null)
+    } catch (err) {
+      console.error('Failed to fetch radar data:', err)
+      setError('Failed to connect to radar system')
+      setIsConnected(false)
+      
+      // Use fallback simulated data
+      setRadarData(prev => ({
+        angle: Math.random() * 180,
+        distance: Math.random() * 100 + 10,
+        timestamp: Date.now() / 1000
+      }))
+    }
+  }
+  
+  // Simulate radar sweep (0-180 degrees)
   useEffect(() => {
     const interval = setInterval(() => {
-      setSweepAngle(prev => (prev + 2) % 360)
+      setSweepAngle(prev => {
+        const next = prev + 2
+        return next > 180 ? 0 : next // Reset to 0 after reaching 180
+      })
     }, 50)
     
     return () => clearInterval(interval)
   }, [])
   
-  // Simulate target updates
+  // Fetch radar data every 15 seconds
   useEffect(() => {
-    const interval = setInterval(() => {
-      setRadarData(prev => ({
-        angle: (Math.random() * 360),
-        distance: (Math.random() * 80 + 20),
-        timestamp: Date.now() / 1000
-      }))
-    }, 4000)
-    
+    fetchRadarData()
+    const interval = setInterval(fetchRadarData, 15000)
     return () => clearInterval(interval)
   }, [])
   
@@ -170,10 +198,22 @@ const RadarMap = () => {
           </div>
           <div className="info-item">
             <span className="info-label">RANGE:</span>
-            <span className="info-value">{radarData.distance.toFixed(1)}m</span>
+            <span className="info-value">{radarData.distance.toFixed(1)} cm</span>
+          </div>
+          <div className="info-item">
+            <span className="info-label">STATUS:</span>
+            <span className={`info-value ${isConnected ? 'connected' : 'disconnected'}`}>
+              {isConnected ? 'LIVE' : 'SIM'}
+            </span>
           </div>
         </div>
       </div>
+      
+      {error && (
+        <div className="radar-error">
+          ⚠️ {error} - Using simulated data
+        </div>
+      )}
       
       <div className="radar-canvas">
         <Canvas camera={{ position: [50, 50, 50], fov: 75 }}>
@@ -189,22 +229,27 @@ const RadarMap = () => {
           {/* Radar Sweep */}
           <RadarSweep currentAngle={sweepAngle} />
           
-          {/* Target Marker */}
+          {/* Main Target Marker */}
           <TargetMarker
             angle={radarData.angle}
             distance={radarData.distance}
             isActive={true}
           />
           
-          {/* Additional static targets */}
-          <TargetMarker angle={120} distance={45} isActive={false} />
-          <TargetMarker angle={240} distance={65} isActive={false} />
+          {/* Additional static targets for demonstration */}
+          <TargetMarker angle={60} distance={45} isActive={false} />
+          <TargetMarker angle={120} distance={65} isActive={false} />
           
           {/* Center marker */}
           <mesh position={[0, 1, 0]}>
             <cylinderGeometry args={[1, 1, 2]} />
             <meshStandardMaterial color="#00ff41" emissive="#00ff41" emissiveIntensity={0.3} />
           </mesh>
+          
+          {/* Angle markers */}
+          <Text position={[100, 5, 0]} fontSize={6} color="#00ff41">0°</Text>
+          <Text position={[0, 5, 100]} fontSize={6} color="#00ff41">90°</Text>
+          <Text position={[-100, 5, 0]} fontSize={6} color="#00ff41">180°</Text>
           
           <OrbitControls enableZoom={true} enablePan={true} />
         </Canvas>
@@ -220,15 +265,25 @@ const RadarMap = () => {
             </div>
             <div className="control-item">
               <span className="control-label">RANGE:</span>
-              <span className="control-value">100M</span>
+              <span className="control-value">0-180°</span>
             </div>
             <div className="control-item">
               <span className="control-label">FREQUENCY:</span>
               <span className="control-value">X-BAND</span>
             </div>
             <div className="control-item">
-              <span className="control-label">TARGETS:</span>
-              <span className="control-value">3 DETECTED</span>
+              <span className="control-label">UPDATE RATE:</span>
+              <span className="control-value">15 SEC</span>
+            </div>
+            <div className="control-item">
+              <span className="control-label">PRECISION:</span>
+              <span className="control-value">±1 CM</span>
+            </div>
+            <div className="control-item">
+              <span className="control-label">CONNECTION:</span>
+              <span className={`control-value ${isConnected ? 'active' : 'inactive'}`}>
+                {isConnected ? 'MONGODB' : 'OFFLINE'}
+              </span>
             </div>
           </div>
         </div>

@@ -27,6 +27,37 @@
   margin: 0;
 }
 
+.system-status-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.status-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.status-icon.online {
+  color: #00ff41;
+  filter: drop-shadow(0 0 5px #00ff41);
+}
+
+.status-icon.offline {
+  color: #ff0000;
+  filter: drop-shadow(0 0 5px #ff0000);
+}
+
 .threat-level {
   padding: 0.75rem 1.5rem;
   border: 2px solid;
@@ -35,6 +66,139 @@
   font-size: 1.1rem;
   letter-spacing: 2px;
   animation: threatPulse 2s infinite;
+}
+
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 2rem;
+}
+
+.loading-spinner {
+  width: 4rem;
+  height: 4rem;
+  border: 3px solid rgba(0, 255, 65, 0.3);
+  border-top: 3px solid #00ff41;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-banner {
+  background: linear-gradient(135deg, rgba(255, 0, 0, 0.2) 0%, rgba(255, 0, 0, 0.1) 100%);
+  border: 1px solid rgba(255, 0, 0, 0.5);
+  border-radius: 5px;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  color: #ff4444;
+  font-weight: bold;
+  animation: errorPulse 2s infinite;
+}
+
+@keyframes errorPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.angle-indicator {
+  width: 100px;
+  height: 100px;
+  border: 2px solid #00ff41;
+  border-radius: 50%;
+  position: relative;
+  margin: 1rem auto;
+  background: radial-gradient(circle, rgba(0, 255, 65, 0.1) 0%, transparent 70%);
+}
+
+.angle-pointer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 40px;
+  background: #00ff41;
+  transform-origin: bottom center;
+  transition: transform 1s ease;
+  box-shadow: 0 0 10px #00ff41;
+}
+
+.angle-scale {
+  position: absolute;
+  top: 110px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #a0a0a0;
+}
+
+.scale-mark {
+  position: absolute;
+  font-size: 0.7rem;
+  color: #00ff41;
+  transform: translateX(-50%);
+}
+
+.distance-bar {
+  width: 100%;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 255, 65, 0.3);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 1rem 0;
+  position: relative;
+}
+
+.distance-fill {
+  height: 100%;
+  background: #00ff41;
+  transition: all 1s ease;
+  box-shadow: 0 0 20px currentColor;
+}
+
+.distance-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  font-size: 0.7rem;
+  color: #a0a0a0;
+}
+
+.scale-value {
+  font-size: 0.7rem;
+  color: #00ff41;
+}
+
+.pulse-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+.pulse-dot.connected {
+  background: #00ff41;
+  box-shadow: 0 0 20px #00ff41;
+}
+
+.pulse-dot.disconnected {
+  background: #ff0000;
+  box-shadow: 0 0 20px #ff0000;
+}
+
+.status-value.offline {
+  color: #ff4444;
+  text-shadow: 0 0 5px #ff4444;
 }
 
 @keyframes threatPulse {
