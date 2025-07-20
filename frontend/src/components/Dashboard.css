@@ -109,36 +109,54 @@
 }
 
 .angle-indicator {
-  width: 100px;
-  height: 100px;
-  border: 2px solid #00ff41;
-  border-radius: 50%;
+  width: 120px;
+  height: 120px;
   position: relative;
   margin: 1rem auto;
   background: radial-gradient(circle, rgba(0, 255, 65, 0.1) 0%, transparent 70%);
 }
 
+.angle-scale-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.angle-arc {
+  width: 100%;
+  height: 100%;
+  border: 2px solid #00ff41;
+  border-radius: 50% 50% 0 0;
+  border-bottom: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+}
+
 .angle-pointer {
   position: absolute;
-  top: 50%;
+  top: 100%;
   left: 50%;
-  width: 2px;
-  height: 40px;
-  background: #00ff41;
+  width: 3px;
+  height: 50px;
+  background: linear-gradient(to top, #00ff41, #ff0080);
   transform-origin: bottom center;
   transition: transform 1s ease;
-  box-shadow: 0 0 10px #00ff41;
+  box-shadow: 0 0 15px #00ff41;
+  border-radius: 2px;
+  margin-left: -1.5px;
 }
 
 .angle-scale {
   position: absolute;
-  top: 110px;
+  top: 100%;
   left: 0;
   right: 0;
+  height: 20px;
   display: flex;
   justify-content: space-between;
-  font-size: 0.8rem;
-  color: #a0a0a0;
+  margin-top: 5px;
 }
 
 .scale-mark {
@@ -146,6 +164,7 @@
   font-size: 0.7rem;
   color: #00ff41;
   transform: translateX(-50%);
+  white-space: nowrap;
 }
 
 .distance-bar {
@@ -199,6 +218,85 @@
 .status-value.offline {
   color: #ff4444;
   text-shadow: 0 0 5px #ff4444;
+}
+
+.radar-components-section {
+  margin-top: 3rem;
+}
+
+.components-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #00ff41;
+  text-shadow: 0 0 15px #00ff41;
+  letter-spacing: 2px;
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(0, 255, 65, 0.3);
+}
+
+.tactical-3d-display {
+  margin-bottom: 3rem;
+}
+
+.display-title {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #00ff41;
+  text-shadow: 0 0 15px #00ff41;
+  letter-spacing: 2px;
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(0, 255, 65, 0.3);
+}
+
+.radar-canvas-dashboard {
+  height: 500px;
+  background: linear-gradient(135deg, rgba(0, 255, 65, 0.05) 0%, rgba(0, 0, 0, 0.9) 100%);
+  border: 2px solid rgba(0, 255, 65, 0.3);
+  border-radius: 15px;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 2rem;
+  box-shadow: 
+    0 0 30px rgba(0, 255, 65, 0.2),
+    inset 0 0 50px rgba(0, 255, 65, 0.1);
+}
+
+.radar-canvas-dashboard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #00ff41, transparent);
+  animation: scanTop 4s infinite;
+  z-index: 1;
+}
+
+.radar-canvas-dashboard::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #00ff41, transparent);
+  animation: scanBottom 4s infinite reverse;
+  z-index: 1;
+}
+
+@keyframes scanTop {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes scanBottom {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
 }
 
 @keyframes threatPulse {

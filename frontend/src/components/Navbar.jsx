@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Radar, Shield, Target } from 'lucide-react'
+import { Radar, Shield, Target, Lock } from 'lucide-react'
 import './Navbar.css'
 
 const Navbar = () => {
@@ -23,11 +23,11 @@ const Navbar = () => {
             DASHBOARD
           </Link>
           <Link 
-            to="/radar" 
-            className={`nav-link ${location.pathname === '/radar' ? 'active' : ''}`}
+            to="/classified" 
+            className={`nav-link ${location.pathname === '/classified' ? 'active' : ''}`}
           >
-            <Radar className="nav-icon" />
-            RADAR MAP
+            <Lock className="nav-icon" />
+            CLASSIFIED
           </Link>
         </div>
 

@@ -107,35 +107,12 @@ const TargetMarker = ({ angle, distance, isActive }) => {
   )
 }
 
-// Radar Sweep (Half circle sweep)
-const RadarSweep = ({ currentAngle }) => {
-  const angleRad = (currentAngle * Math.PI) / 180
-  const points = [
-    new Vector3(0, 0.1, 0),
-    new Vector3(
-      Math.cos(angleRad) * 100,
-      0.1,
-      Math.sin(angleRad) * 100
-    )
-  ]
-  
-  return (
-    <Line
-      points={points}
-      color="#00ff41"
-      lineWidth={3}
-      opacity={0.8}
-    />
-  )
-}
-
 const RadarMap = () => {
   const [radarData, setRadarData] = useState({
     angle: 0,
     distance: 0,
     timestamp: Date.now() / 1000
   })
-  const [sweepAngle, setSweepAngle] = useState(0)
   const [isConnected, setIsConnected] = useState(false)
   const [error, setError] = useState(null)
   
@@ -164,18 +141,6 @@ const RadarMap = () => {
     }
   }
   
-  // Simulate radar sweep (0-180 degrees)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSweepAngle(prev => {
-        const next = prev + 2
-        return next > 180 ? 0 : next // Reset to 0 after reaching 180
-      })
-    }, 50)
-    
-    return () => clearInterval(interval)
-  }, [])
-  
   // Fetch radar data every 15 seconds
   useEffect(() => {
     fetchRadarData()
@@ -188,10 +153,6 @@ const RadarMap = () => {
       <div className="radar-header">
         <h1>3D TACTICAL RADAR DISPLAY</h1>
         <div className="radar-info">
-          <div className="info-item">
-            <span className="info-label">SWEEP ANGLE:</span>
-            <span className="info-value">{sweepAngle.toFixed(1)}°</span>
-          </div>
           <div className="info-item">
             <span className="info-label">TARGET BEARING:</span>
             <span className="info-value">{radarData.angle.toFixed(1)}°</span>
@@ -225,9 +186,6 @@ const RadarMap = () => {
           
           {/* Radar Grid */}
           <RadarGrid />
-          
-          {/* Radar Sweep */}
-          <RadarSweep currentAngle={sweepAngle} />
           
           {/* Main Target Marker */}
           <TargetMarker

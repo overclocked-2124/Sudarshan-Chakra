@@ -15,6 +15,17 @@ export const radarAPI = {
     }
   },
 
+  // Get recent radar data (last 5 points)
+  getRecent: async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/radar/recent`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching recent radar data:', error);
+      throw error;
+    }
+  },
+
   // Get all radar data with pagination
   getAll: async (page = 1, limit = 10) => {
     try {
@@ -24,28 +35,6 @@ export const radarAPI = {
       return response.data;
     } catch (error) {
       console.error('Error fetching all radar data:', error);
-      throw error;
-    }
-  },
-
-  // Create new radar data
-  create: async (data) => {
-    try {
-      const response = await axios.post(`${API_BASE_URL}/radar`, data);
-      return response.data;
-    } catch (error) {
-      console.error('Error creating radar data:', error);
-      throw error;
-    }
-  },
-
-  // Seed sample data
-  seed: async () => {
-    try {
-      const response = await axios.post(`${API_BASE_URL}/radar/seed`);
-      return response.data;
-    } catch (error) {
-      console.error('Error seeding data:', error);
       throw error;
     }
   },
