@@ -132,10 +132,10 @@ const RadarMap = () => {
       setError('Failed to connect to radar system')
       setIsConnected(false)
       
-      // Use fallback simulated data
+      // Use zero values when no data is available
       setRadarData(prev => ({
-        angle: Math.random() * 180,
-        distance: Math.random() * 100 + 10,
+        angle: 0,
+        distance: 0,
         timestamp: Date.now() / 1000
       }))
     }
@@ -172,7 +172,7 @@ const RadarMap = () => {
       
       {error && (
         <div className="radar-error">
-          ⚠️ {error} - Using simulated data
+          {error} - Showing zero values
         </div>
       )}
       

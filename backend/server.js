@@ -141,14 +141,14 @@ app.get('/api/health', (req, res) => {
 
 app.listen(PORT, () => {
   console.log('');
-  console.log('🚀 ===================================');
-  console.log('🎯 SUDARSHAN CHAKRA RADAR SERVER');
-  console.log('🚀 ===================================');
-  console.log(`📡 Server running on port ${PORT}`);
-  console.log(`🌐 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`🎯 Latest radar data: http://localhost:${PORT}/api/radar/latest`);
-  console.log(`📊 Recent radar data: http://localhost:${PORT}/api/radar/recent`);
-  console.log('🚀 ===================================');
-  console.log('⚡ Server ready for connections...');
+  console.log('===================================');
+  console.log('SUDARSHAN CHAKRA RADAR SERVER');
+  console.log('===================================');
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Health check: http://localhost:${PORT}/api/health`);
+  console.log(`Latest radar data: http://localhost:${PORT}/api/radar/latest`);
+  console.log(`Recent radar data: http://localhost:${PORT}/api/radar/recent`);
+  console.log('===================================');
+  console.log('Server ready for connections...');
   console.log('');
 });

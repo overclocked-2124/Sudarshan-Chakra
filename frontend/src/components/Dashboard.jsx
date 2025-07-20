@@ -265,15 +265,13 @@ const Dashboard = () => {
       setError('Failed to connect to radar system')
       setIsConnected(false)
       
-      // Use fallback simulated data if API fails
-      const simulatedDistance = Math.random() * 100 + 10
-      const simulatedAngle = Math.random() * 180
+      // Use zero values when no data is available
       setRadarData(prev => ({
-        angle: simulatedAngle, // 0-180 degree range
-        distance: simulatedDistance, // 10-110 cm
+        angle: 0,
+        distance: 0,
         timestamp: Date.now() / 1000
       }))
-      updatePingStats(simulatedDistance, simulatedAngle, [])
+      // Don't update ping stats for zero values
     } finally {
       setIsLoading(false)
     }
@@ -286,14 +284,8 @@ const Dashboard = () => {
       setRecentData(data || [])
     } catch (err) {
       console.error('Failed to fetch recent radar data:', err)
-      // Use fallback data if API fails
-      setRecentData([
-        { angle: 45, distance: 60, timestamp: Date.now() / 1000 - 40 },
-        { angle: 90, distance: 45, timestamp: Date.now() / 1000 - 30 },
-        { angle: 135, distance: 75, timestamp: Date.now() / 1000 - 20 },
-        { angle: 60, distance: 55, timestamp: Date.now() / 1000 - 10 },
-        { angle: Math.random() * 180, distance: Math.random() * 100 + 10, timestamp: Date.now() / 1000 }
-      ])
+      // Use empty array when no data is available
+      setRecentData([])
     }
   }
 
@@ -450,7 +442,7 @@ const Dashboard = () => {
                       key={index}
                       className="bearing-bar"
                       style={{
-                        height: `${(bearing / 180) * 40}px`,
+                        height: `${(bearing / 180) * 25}px`,
                         backgroundColor: index === pingStats.previousBearings.length - 1 ? '#00ff41' : 'rgba(0, 255, 65, 0.5)'
                       }}
                       title={`${bearing.toFixed(1)}°`}
