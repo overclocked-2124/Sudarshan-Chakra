@@ -1,0 +1,60 @@
+.radar-view-2d {
+  position: relative;
+  background: radial-gradient(circle, rgba(0, 255, 65, 0.1) 0%, transparent 70%);
+  border: 2px solid #00ff41;
+  border-radius: 10px;
+  padding: 1rem;
+  margin: 1rem 0;
+  box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+}
+
+.radar-canvas-2d {
+  width: 100%;
+  height: auto;
+  max-width: 400px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 5px;
+}
+
+.radar-status-2d {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.status-indicator-2d {
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  font-family: 'Orbitron', monospace;
+  letter-spacing: 1px;
+}
+
+.status-indicator-2d.connected {
+  background: #00ff41;
+  color: #000;
+  animation: pulse2d 2s infinite;
+}
+
+.status-indicator-2d.disconnected {
+  background: #ff8800;
+  color: #000;
+  animation: blink2d 1s infinite;
+}
+
+@keyframes pulse2d {
+  0%, 100% { 
+    transform: scale(1);
+    box-shadow: 0 0 5px #00ff41;
+  }
+  50% { 
+    transform: scale(1.05);
+    box-shadow: 0 0 10px #00ff41;
+  }
+}
+
+@keyframes blink2d {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.7; }
+}
